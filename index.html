@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rebuilt · Bakery orders | Batch &amp; Bloom</title>
+<style>
+:root{color-scheme:light;--ink:#30232b;--muted:#6e5d66;--wine:#692847;--deep:#452036;--border:#eadfe3;--paper:#fbf7f5;--green:#275a42}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:1rem/1.5 "Segoe UI",system-ui,sans-serif}
+.shell{width:min(1360px,calc(100% - 52px));margin:auto}header{background:var(--deep);color:#fff}.top{display:flex;justify-content:space-between;align-items:center;min-height:66px;gap:15px}.top span{font:1.5rem Georgia,serif}.top a{color:#f6dfe9;text-underline-offset:4px;font-size:.9rem}
+main{padding:28px 0 38px}.intro{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:19px}h1,h2{font-family:Georgia,serif;color:var(--deep);font-weight:500;margin:0}h1{font-size:clamp(2.5rem,5vw,3.8rem);line-height:1.07;letter-spacing:-.035em}h2{font-size:1.65rem}.intro p,.card-heading p{margin:5px 0 0}.intro p{color:var(--muted)}.prices{font-size:.875rem}.prices strong{color:var(--deep)}
+.totals,.card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 7px #45203608}.totals{display:grid;grid-template-columns:.8fr 1fr 1fr 1.3fr;margin-bottom:20px;overflow:hidden}.totals>div{padding:12px 17px;border-right:1px solid var(--border);color:var(--muted);font-size:.875rem}.totals>div:last-child{border:0}.totals strong{display:block;font:1.55rem/1.16 Georgia,serif;color:var(--deep);margin-top:3px}.totals .total-date{background:#f4e8ee}
+.columns{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:18px;align-items:start;margin-bottom:14px}.card{min-width:0}.card-heading{padding:15px 18px}.muted,.footnote{color:var(--muted);font-size:.875rem}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;text-align:left;font-size:.9rem}thead{background:#faf3f7;color:#594451}th,td{padding:9px 10px;vertical-align:top}th:first-child,td:first-child{padding-left:17px}th:last-child,td:last-child{padding-right:17px}tbody td,tbody th{border-top:1px solid #f1e9ec}.requests td:last-child{min-width:138px}.schedule th{white-space:nowrap}.schedule td:last-child{min-width:94px}.schedule th{font-weight:600}
+form{margin:0}button{font:600 .875rem/1.2 "Segoe UI",system-ui,sans-serif;background:#fff;border:1px solid #d7bdca;color:var(--wine);border-radius:7px;padding:8px 10px;cursor:pointer;white-space:nowrap}button:hover{background:#f6e8ef}.primary{background:var(--wine);border-color:var(--wine);color:white;padding:11px 14px}.primary:hover{background:var(--deep)}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #a95178;outline-offset:3px}
+.controls{padding:13px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.controls p{margin:0}.controls:empty{display:none}.tag{display:inline-block;padding:2px 8px;background:#f2e6ed;border-radius:12px;color:var(--wine);font-weight:650;font-size:.8125rem;white-space:nowrap}.tag.accepted{background:#e5f1e9;color:var(--green)}.tag.rejected{background:#fff0e5;color:#8b4322}.requests td form{margin-top:6px}.empty,.footnote{margin:0;padding:15px 18px;border-top:1px solid var(--border);color:var(--muted)}.empty{background:#fdf9fb}progress{display:block;width:min(100%,100px);height:7px;accent-color:#a9577f;margin:4px 0}
+summary{padding:12px 18px;color:var(--wine);font-weight:650;cursor:pointer}details+details{margin-top:9px}.feedback{background:#e7f4eb;color:var(--green);padding:8px 12px;border-radius:7px;margin:0 0 14px}.feedback.error{background:#fff0e5;color:#8b4322}.feedback:empty{display:none}
+@media(max-width:970px){.columns{grid-template-columns:minmax(0,1fr)}}@media(max-width:580px){.shell{width:calc(100% - 24px)}.intro{align-items:start;flex-direction:column}.totals{grid-template-columns:1fr 1fr}.totals>div:nth-child(-n+2){border-bottom:1px solid var(--border)}.totals>div:nth-child(2){border-right:0}.totals>div{padding:10px}.totals strong{font-size:1.3rem}}
+
+.portable-nav{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px 16px}
+#portable-help{width:min(520px,calc(100% - 34px));padding:23px;border:1px solid #dfcdd6;border-radius:14px;color:#30232b}
+#portable-help::backdrop{background:#30232b80}#portable-help h2{font:1.65rem Georgia,serif;margin:0}
+#portable-help button{padding:7px 12px;cursor:pointer}
+.requests td button[data-action="reject"]{display:block;margin-top:6px}
+
+.inbox-column{display:grid;gap:14px;min-width:0}
+.calendar-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.calendar-heading p{margin:0}
+.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;padding:0 17px 14px}
+.calendar-day{display:grid;justify-items:center;gap:3px;padding:8px 4px;min-width:0;line-height:1.2;background:#fdf9fb;border-color:var(--border)}
+.calendar-day[aria-pressed=true]{background:#f2e2ea;border-color:#9f5d7d;box-shadow:inset 0 -2px 0 #9f5d7d}
+.calendar-day strong{font:1.6rem/1 Georgia,serif;color:var(--deep)}
+.calendar-weekday,.calendar-count{font-size:.82rem;color:var(--muted)}
+.calendar-orders{border-top:1px solid var(--border);padding:11px 17px 13px}
+.calendar-date{display:flex;justify-content:space-between;align-items:center;gap:7px;flex-wrap:wrap}
+.calendar-date h3{margin:0;color:var(--deep);font-size:1rem}
+.calendar-list{list-style:none;padding:0;margin:8px 0 0;font-size:.9rem}
+.calendar-list li{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid #f1e9ec}
+.calendar-order-number{font-size:.82rem;color:var(--muted);margin-left:6px;white-space:nowrap}
+.calendar-empty{margin:8px 0 0;color:var(--muted)}
+@media(max-width:580px){.calendar-days{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:0 12px 12px}.calendar-heading,.calendar-orders{padding-left:12px;padding-right:12px}}
+</style>
+</head>
+<body data-version="rebuilt">
+<header><div class="shell top"><span>Batch &amp; Bloom</span><nav class="portable-nav"><a href="#portable-help" id="help-link">Quick guide</a><a href="Bakery-Tracker-Rebuilt.html" download="Bakery-Tracker-Rebuilt.html" id="download-link">Download HTML</a></nav></div></header><main class="shell"><h1>Bakery orders</h1><noscript>Enable JavaScript to use the bakery tracker.</noscript></main><dialog id="portable-help" aria-labelledby="portable-help-title"><h2 id="portable-help-title">Bakery tracker guide</h2><p>Check the pickup schedule and book helpers if needed. Fetch today’s lecture messages. Review the inbox, then choose Accept all and go to next day. After Sunday, close the remaining pickup days. Select a day in the pickup calendar to see its orders.</p><p>Each order has one product. Two calendar days of notice apply to orders, changes, cancellations, and helper bookings. Cupcakes cost $40 and take 30 minutes per dozen. Cakes cost $120 and take 2 hours each. A $100 helper adds 4 hours to the 8-hour oven day.</p><p>Open this HTML file directly in Chrome. It includes the lecture’s orders and inbox. Progress stays in the browser for this copy. Downloading or uploading the HTML shares a fresh copy of the exercise.</p><form method="dialog"><button type="submit">Close</button></form></dialog><script type="application/json" id="bakery-data">{"orders":[{"id":101,"customer":"Kim","product":"cupcakes","quantity":4,"pickup":"2026-11-23","status":"confirmed"},{"id":102,"customer":"Ross","product":"cake","quantity":1,"pickup":"2026-11-23","status":"confirmed"},{"id":103,"customer":"Ali","product":"cupcakes","quantity":6,"pickup":"2026-11-24","status":"confirmed"},{"id":104,"customer":"Diaz","product":"cake","quantity":1,"pickup":"2026-11-24","status":"confirmed"},{"id":105,"customer":"Fox","product":"cupcakes","quantity":4,"pickup":"2026-11-25","status":"confirmed"},{"id":106,"customer":"Ng","product":"cupcakes","quantity":6,"pickup":"2026-11-26","status":"confirmed"},{"id":107,"customer":"Brown","product":"cupcakes","quantity":2,"pickup":"2026-11-26","status":"confirmed"},{"id":108,"customer":"Silva","product":"cake","quantity":1,"pickup":"2026-11-26","status":"confirmed"},{"id":109,"customer":"Wong","product":"cake","quantity":1,"pickup":"2026-11-27","status":"confirmed"},{"id":110,"customer":"Chen","product":"cupcakes","quantity":6,"pickup":"2026-11-27","status":"confirmed"},{"id":111,"customer":"Haddad","product":"cake","quantity":1,"pickup":"2026-11-28","status":"confirmed"},{"id":112,"customer":"Moreau","product":"cupcakes","quantity":4,"pickup":"2026-11-28","status":"confirmed"},{"id":113,"customer":"Evans","product":"cupcakes","quantity":2,"pickup":"2026-11-29","status":"confirmed"}],"requests":[{"id":1,"received":"2026-11-23","customer":"Jasmine","kind":"order","product":"cupcakes","quantity":3,"pickup":"2026-11-25","target":null,"message":"Name: Jasmine\nOrder: 3 Dozen Cupcakes\nPickup Date: Wed Nov 25","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":2,"received":"2026-11-23","customer":"Okafor","kind":"order","product":"cupcakes","quantity":2,"pickup":"2026-11-24","target":null,"message":"Name: Okafor\nOrder: 2 Dozen Cupcakes\nPickup Date: Tue Nov 24","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":3,"received":"2026-11-23","customer":"Patel","kind":"order","product":"cake","quantity":1,"pickup":"2026-11-27","target":null,"message":"Name: Patel\nOrder: 1 Cake\nPickup Date: Fri Nov 27","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":4,"received":"2026-11-24","customer":"Brown","kind":"cancel","product":null,"quantity":null,"pickup":"2026-11-26","target":null,"message":"Name: Brown\nOrder: Cancel\nPickup Date: Thu Nov 26","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":5,"received":"2026-11-24","customer":"Reyes","kind":"order","product":"cupcakes","quantity":6,"pickup":"2026-11-26","target":null,"message":"Name: Reyes\nOrder: 6 Dozen Cupcakes\nPickup Date: Thu Nov 26","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":6,"received":"2026-11-24","customer":"Tan","kind":"order","product":"cake","quantity":1,"pickup":"2026-11-28","target":null,"message":"Name: Tan\nOrder: 1 Cake\nPickup Date: Sat Nov 28","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":7,"received":"2026-11-24","customer":"Park","kind":"order","product":"cupcakes","quantity":3,"pickup":"2026-11-27","target":null,"message":"Name: Park\nOrder: 3 Dozen Cupcakes\nPickup Date: Fri Nov 27","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":8,"received":"2026-11-25","customer":"Moreau","kind":"change","product":"cupcakes","quantity":6,"pickup":"2026-11-28","target":null,"message":"Name: Moreau\nOrder: Change to 6 Dozen Cupcakes\nPickup Date: Sat Nov 28","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":9,"received":"2026-11-25","customer":"Singh","kind":"order","product":"cupcakes","quantity":4,"pickup":"2026-11-28","target":null,"message":"Name: Singh\nOrder: 4 Dozen Cupcakes\nPickup Date: Sat Nov 28","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":10,"received":"2026-11-25","customer":"Kaur","kind":"order","product":"cake","quantity":1,"pickup":"2026-11-29","target":null,"message":"Name: Kaur\nOrder: 1 Cake\nPickup Date: Sun Nov 29","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":11,"received":"2026-11-25","customer":"Lam","kind":"order","product":"cupcakes","quantity":2,"pickup":"2026-11-27","target":null,"message":"Name: Lam\nOrder: 2 Dozen Cupcakes\nPickup Date: Fri Nov 27","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":12,"received":"2026-11-26","customer":"Lam","kind":"change","product":"cupcakes","quantity":1,"pickup":"2026-11-27","target":null,"message":"Name: Lam\nOrder: Change to 1 Dozen Cupcakes\nPickup Date: Fri Nov 27","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":13,"received":"2026-11-26","customer":"Wilson","kind":"order","product":"cupcakes","quantity":6,"pickup":"2026-11-28","target":null,"message":"Name: Wilson\nOrder: 6 Dozen Cupcakes\nPickup Date: Sat Nov 28","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":14,"received":"2026-11-26","customer":"Novak","kind":"order","product":"cupcakes","quantity":2,"pickup":"2026-11-28","target":null,"message":"Name: Novak\nOrder: 2 Dozen Cupcakes\nPickup Date: Sat Nov 28","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":15,"received":"2026-11-26","customer":"Bell","kind":"order","product":"cupcakes","quantity":3,"pickup":"2026-11-28","target":null,"message":"Name: Bell\nOrder: 3 Dozen Cupcakes\nPickup Date: Sat Nov 28","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":16,"received":"2026-11-26","customer":"Costa","kind":"order","product":"cupcakes","quantity":2,"pickup":"2026-11-29","target":null,"message":"Name: Costa\nOrder: 2 Dozen Cupcakes\nPickup Date: Sun Nov 29","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":17,"received":"2026-11-27","customer":"Adams","kind":"order","product":"cupcakes","quantity":2,"pickup":"2026-11-28","target":null,"message":"Name: Adams\nOrder: 2 Dozen Cupcakes\nPickup Date: Sat Nov 28","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":18,"received":"2026-11-27","customer":"Costa","kind":"cancel","product":null,"quantity":null,"pickup":"2026-11-29","target":null,"message":"Name: Costa\nOrder: Cancel\nPickup Date: Sun Nov 29","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":19,"received":"2026-11-27","customer":"Zhou","kind":"order","product":"cupcakes","quantity":4,"pickup":"2026-11-29","target":null,"message":"Name: Zhou\nOrder: 4 Dozen Cupcakes\nPickup Date: Sun Nov 29","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":20,"received":"2026-11-27","customer":"Gupta","kind":"order","product":"cake","quantity":1,"pickup":"2026-11-30","target":null,"message":"Name: Gupta\nOrder: 1 Cake\nPickup Date: Mon Nov 30","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":21,"received":"2026-11-28","customer":"Lee","kind":"order","product":"cupcakes","quantity":4,"pickup":"2026-11-30","target":null,"message":"Name: Lee\nOrder: 4 Dozen Cupcakes\nPickup Date: Mon Nov 30","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":22,"received":"2026-11-28","customer":"Zhou","kind":"change","product":"cupcakes","quantity":2,"pickup":"2026-11-29","target":null,"message":"Name: Zhou\nOrder: Change to 2 Dozen Cupcakes\nPickup Date: Sun Nov 29","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":23,"received":"2026-11-28","customer":"Ito","kind":"order","product":"cake","quantity":1,"pickup":"2026-12-01","target":null,"message":"Name: Ito\nOrder: 1 Cake\nPickup Date: Tue Dec 1","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":24,"received":"2026-11-29","customer":"Lee","kind":"cancel","product":null,"quantity":null,"pickup":"2026-11-30","target":null,"message":"Name: Lee\nOrder: Cancel\nPickup Date: Mon Nov 30","status":"pending","resolved_order":null,"decided":null,"reason":""},{"id":25,"received":"2026-11-29","customer":"Nair","kind":"order","product":"cupcakes","quantity":6,"pickup":"2026-12-01","target":null,"message":"Name: Nair\nOrder: 6 Dozen Cupcakes\nPickup Date: Tue Dec 1","status":"pending","resolved_order":null,"decided":null,"reason":""}],"helpers":[],"day":"2026-11-23","fetchedDay":""}</script>
+<script>
+"use strict";
+const fixture = JSON.parse(document.getElementById("bakery-data").textContent);
+const storageKey = "lecture9-bakery-" + document.body.dataset.version + ":" + location.pathname;
+const products = {cupcakes: [40, 30], cake: [120, 120]};
+const firstDay = "2026-11-23";
+const lastInboxDay = "2026-11-29";
+const baseMinutes = 480;
+const helperMinutes = 240;
+const helperCost = 100;
+
+function readBakery() {
+  try {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return structuredClone(fixture);
+}
+
+function saveBakery(state) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  } catch {
+    throw new Error("Chrome could not save progress. Open this file in a regular browser tab with local storage enabled.");
+  }
+}
+
+function plusDays(value, days) {
+  const day = new Date(value + "T00:00:00Z");
+  day.setUTCDate(day.getUTCDate() + days);
+  return day.toISOString().slice(0, 10);
+}
+
+function orderMinutes(row) {
+  return row.quantity * products[row.product][1];
+}
+
+function ovenUsed(state, pickup, exclude) {
+  return state.orders
+    .filter(row => row.pickup === pickup && row.status !== "cancelled" && row.id !== exclude)
+    .reduce((total, row) => total + orderMinutes(row), 0);
+}
+
+function ovenLimit(state, pickup) {
+  return baseMinutes + (state.helpers.includes(pickup) ? helperMinutes : 0);
+}
+
+function checkRequest(state, row, day) {
+  if (row.received > day) return {reason: "This message has not arrived yet."};
+  const earliest = plusDays(day, 2);
+  if (row.pickup < earliest) return {reason: "Requires at least 2 calendar days’ notice."};
+  let target;
+  if (row.kind !== "order") {
+    const matches = state.orders.filter(order => order.status === "confirmed" && (row.target
+      ? order.id === row.target
+      : order.customer.toLowerCase() === row.customer.toLowerCase() && order.pickup === row.pickup));
+    if (matches.length !== 1) return {reason: "No unique confirmed order matches this request."};
+    target = matches[0];
+    if (target.pickup < earliest) return {reason: "The original pickup requires 2 calendar days’ notice.", target};
+  }
+  if (row.kind !== "cancel") {
+    const available = ovenLimit(state, row.pickup) - ovenUsed(state, row.pickup, target?.id);
+    if (orderMinutes(row) > available) {
+      return {reason: "Oven capacity exceeded by " + (orderMinutes(row) - available) + " min.", target};
+    }
+  }
+  return {reason: "", target};
+}
+
+function nextId(rows) {
+  return Math.max(0, ...rows.map(row => row.id)) + 1;
+}
+
+function resolveRequest(row, day, status, reason = "", orderId = null) {
+  Object.assign(row, {status, reason, decided: day, resolved_order: orderId});
+}
+
+function approveRequest(state, row, day, target) {
+  if (row.kind === "order") {
+    target = {id: nextId(state.orders), customer: row.customer, status: "confirmed"};
+    state.orders.push(target);
+  }
+  if (row.kind === "cancel") {
+    target.status = "cancelled";
+  } else {
+    Object.assign(target, {product: row.product, quantity: row.quantity, pickup: row.pickup});
+  }
+  resolveRequest(row, day, "accepted", "", target.id);
+}
+
+function recordHelper(state, pickup, day) {
+  if (pickup < plusDays(day, 2)) throw new Error("Helpers require at least 2 calendar days’ notice.");
+  if (state.helpers.includes(pickup)) return false;
+  state.helpers.push(pickup);
+  return true;
+}
+
+function sortOrders(rows) {
+  return rows.toSorted((a, b) => a.pickup.localeCompare(b.pickup) || a.id - b.id);
+}
+
+document.getElementById("help-link").addEventListener("click", event => {
+  event.preventDefault();
+  document.getElementById("portable-help").showModal();
+});
+const cleanCopy = "<!doctype html>\n" + document.documentElement.outerHTML;
+document.getElementById("download-link").href = URL.createObjectURL(new Blob([cleanCopy], {type:"text/html;charset=utf-8"}));
+const main = document.querySelector("main");
+const formatter = new Intl.DateTimeFormat("en-US", {weekday:"long",month:"short",day:"numeric",timeZone:"UTC"});
+const shortWeekday = new Intl.DateTimeFormat("en-US", {weekday:"short",timeZone:"UTC"});
+const dollars = new Intl.NumberFormat("en-US", {style:"currency",currency:"USD",maximumFractionDigits:0});
+const dayLabel = day => formatter.format(new Date(day + "T00:00:00Z"));
+const money = amount => dollars.format(amount);
+
+function duration(minutes) {
+  const value = Math.max(0, minutes);
+  const hours = Math.floor(value / 60);
+  const rest = value % 60;
+  return [hours && hours + "h", rest && rest + "m"].filter(Boolean).join(" ") || "0h";
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+}
+
+function itemLabel(row) {
+  if (row.product === "cupcakes") return row.quantity + " dozen cupcakes";
+  if (row.product === "cake") return row.quantity + (row.quantity === 1 ? " cake" : " cakes");
+  return "Cancel pickup";
+}
+
+function table(columns, rows) {
+  if (!rows.length) return '<p class="empty">No records to show.</p>';
+  const head = columns.map(label => '<th scope="col">' + label + "</th>").join("");
+  return '<div class="scroll"><table><thead><tr>' + head + "</tr></thead><tbody>" + rows.join("") + "</tbody></table></div>";
+}
+
+function cell(text) {
+  return "<td>" + escapeHtml(text) + "</td>";
+}
+
+function muted(text) {
+  return '<div class="muted">' + escapeHtml(text) + "</div>";
+}
+
+function action(actionName, label, {style = "", key = "", prompt = ""} = {}) {
+  return '<button type="button" class="' + style + '" data-action="' + actionName + '" data-key="' + escapeHtml(key)
+    + '" data-prompt="' + escapeHtml(prompt) + '">' + escapeHtml(label) + "</button>";
+}
+
+function inboxRows(state, requests) {
+  const kinds = {order:"New order",change:"Change",cancel:"Cancellation"};
+  const labels = {pending:"Requested",accepted:"Applied",rejected:"Rejected"};
+  const rows = requests.map(row => {
+    const free = ovenLimit(state, row.pickup) - ovenUsed(state, row.pickup);
+    const detail = row.product ? muted(money(row.quantity * products[row.product][0]) + " · " + duration(orderMinutes(row))) : "";
+    const reject = row.status === "pending" ? action("reject", "Reject " + row.customer, {key:row.id,prompt:"Reject " + row.customer + "’s request?"}) : "";
+    return "<tr><td><strong>" + escapeHtml(row.customer) + "</strong>" + muted(kinds[row.kind])
+      + "</td><td>" + itemLabel(row) + detail + "</td><td>" + dayLabel(row.pickup) + muted(duration(free) + " oven time left")
+      + '</td><td><span class="tag ' + row.status + '">' + labels[row.status] + "</span>"
+      + (row.reason ? muted(row.reason) : "") + reject + "</td></tr>";
+  });
+  return table(["Customer","Request","Pickup","Status"], rows);
+}
+
+function scheduleRows(state, lastPickup) {
+  const start = state.day < lastPickup ? state.day : lastPickup;
+  const rows = [];
+  for (let index = 0; index < 7; index++) {
+    const pickup = plusDays(start, index);
+    if (pickup > lastPickup) break;
+    const used = ovenUsed(state, pickup);
+    const limit = ovenLimit(state, pickup);
+    let helper = "";
+    if (state.helpers.includes(pickup)) {
+      helper = '<span class="tag accepted">Booked · $100</span>';
+    } else if (pickup >= plusDays(state.day, 2)) {
+      helper = action("helper", "Book helper", {
+        key:pickup,
+        prompt:"Book a $100 helper for " + dayLabel(pickup) + "? This adds 4 oven hours."
+      });
+    }
+    rows.push('<tr><th scope="row">' + dayLabel(pickup) + "</th><td><span>" + duration(used) + " / " + duration(limit)
+      + "</span>" + muted(duration(limit - used) + " left") + '<progress max="' + limit + '" value="' + used
+      + '" aria-label="Oven time used on ' + dayLabel(pickup) + '"></progress></td><td>' + helper + "</td></tr>");
+  }
+  return table(["Pickup day","Oven time","Helper"], rows);
+}
+
+let selectedPickup = "";
+
+function pickupCalendar(state, last) {
+  const complete = state.day > last;
+  const first = complete ? plusDays(last, -6) : state.day;
+  const days = Array.from({length:7}, (_, index) => plusDays(first, index));
+  if (!days.includes(selectedPickup)) selectedPickup = complete ? last : first;
+
+  const orders = state.orders.filter(order => order.status !== "cancelled");
+  const daysHtml = days.map(day => {
+    const count = orders.filter(order => order.pickup === day).length;
+    const date = new Date(day + "T00:00:00Z");
+    const pickupLabel = count + (count === 1 ? " pickup" : " pickups");
+    const current = day === state.day ? ' aria-current="date"' : "";
+    return '<button type="button" class="calendar-day" data-pickup="' + day
+      + '" aria-pressed="' + (day === selectedPickup) + '"' + current
+      + ' aria-controls="calendar-orders" aria-label="' + dayLabel(day) + ', ' + pickupLabel + '">'
+      + '<span class="calendar-weekday">' + shortWeekday.format(date) + '</span><strong>' + date.getUTCDate()
+      + '</strong><span class="calendar-count">' + pickupLabel + '</span></button>';
+  }).join("");
+  const pickups = orders.filter(order => order.pickup === selectedPickup);
+  const booked = state.helpers.includes(selectedPickup) ? '<span class="tag accepted">Helper booked</span>' : "";
+  const items = pickups.map(order => '<li><span><strong>' + escapeHtml(order.customer)
+    + '</strong><span class="calendar-order-number">#' + order.id + '</span></span><span>'
+    + itemLabel(order) + (order.status === "picked_up" ? '<span class="calendar-order-number">Picked up</span>' : "")
+    + '</span></li>').join("");
+  return '<div class="card-heading calendar-heading"><h2 id="calendar-title">Pickup calendar</h2>'
+    + '<p class="muted">' + (complete ? "Final seven pickup days" : "Next seven days · 5 PM pickups") + '</p></div>'
+    + '<div class="calendar-days" role="group" aria-label="Select a pickup day">' + daysHtml + '</div>'
+    + '<div class="calendar-orders" id="calendar-orders" aria-live="polite"><div class="calendar-date">'
+    + '<h3>' + dayLabel(selectedPickup) + '</h3>' + booked + '</div><div class="muted">'
+    + duration(ovenUsed(state, selectedPickup)) + ' of ' + duration(ovenLimit(state, selectedPickup))
+    + ' oven time scheduled</div>'
+    + (items ? '<ul class="calendar-list">' + items + '</ul>' : '<p class="calendar-empty">No pickups scheduled.</p>')
+    + '</div>';
+}
+
+function orderBook(state) {
+  const labels = {confirmed:"Accepted",picked_up:"Picked up",cancelled:"Cancelled"};
+  return table(["Order","Customer","Product","Pickup","Status"], sortOrders(state.orders).map(row =>
+    "<tr>" + cell("#" + row.id) + cell(row.customer) + cell(itemLabel(row)) + cell(dayLabel(row.pickup)) + cell(labels[row.status]) + "</tr>"
+  ));
+}
+
+function history(state) {
+  const accepted = {order:"Accepted",change:"Changed",cancel:"Cancelled"};
+  const rows = state.requests.filter(row => row.received <= state.fetchedDay && row.status !== "pending")
+    .toSorted((a, b) => b.received.localeCompare(a.received) || a.id - b.id);
+  return table(["Received","Customer","Request","Decision"], rows.map(row =>
+    "<tr>" + cell(dayLabel(row.received)) + cell(row.customer) + cell(itemLabel(row)) + "<td>"
+    + (row.status === "rejected" ? "Rejected" : accepted[row.kind]) + (row.reason ? muted(row.reason) : "") + "</td></tr>"
+  ));
+}
+
+function lastPickup(state) {
+  return [...state.orders, ...state.requests].map(row => row.pickup).sort().at(-1);
+}
+
+function pendingToday(state) {
+  return state.requests.filter(row => row.received === state.day && row.status === "pending");
+}
+
+function applyDailyAction(state, type, key) {
+  const day = state.day;
+  if (type === "fetch") {
+    if (state.fetchedDay === day || day > lastInboxDay) return "No new messages to fetch today.";
+    let applied = 0;
+    let rejected = 0;
+    for (const row of pendingToday(state)) {
+      const result = checkRequest(state, row, day);
+      if (result.reason) {
+        resolveRequest(row, day, "rejected", result.reason);
+        rejected++;
+      } else if (row.kind !== "order") {
+        approveRequest(state, row, day, result.target);
+        applied++;
+      }
+    }
+    state.fetchedDay = day;
+    const count = state.requests.filter(row => row.received === day).length;
+    return dayLabel(day).split(",")[0] + "’s messages loaded. " + count + " messages, " + applied
+      + " changes or cancellations applied, " + rejected + " incompatible.";
+  }
+  if (type === "reject") {
+    const row = pendingToday(state).find(entry => entry.id === Number(key));
+    if (state.fetchedDay !== day || !row) throw new Error("This request is no longer available.");
+    resolveRequest(row, day, "rejected", "Rejected by the baker.");
+    return row.customer + "’s request was rejected.";
+  }
+  if (type === "helper") {
+    if (key > lastPickup(state)) throw new Error("Choose a pickup day shown in the schedule.");
+    if (!recordHelper(state, key, day)) return "A helper is already booked.";
+    return "Helper booked for " + dayLabel(key) + ". Four hours added for $100.";
+  }
+  if (type !== "advance" || (day <= lastInboxDay && state.fetchedDay !== day) || day > lastPickup(state)) {
+    throw new Error("Review today’s messages before moving on.");
+  }
+  let accepted = 0;
+  let rejected = 0;
+  for (const row of pendingToday(state)) {
+    const result = checkRequest(state, row, day);
+    if (result.reason) {
+      resolveRequest(row, day, "rejected", result.reason);
+      rejected++;
+    } else {
+      approveRequest(state, row, day, result.target);
+      accepted++;
+    }
+  }
+  let pickedUp = 0;
+  for (const row of state.orders) {
+    if (row.status === "confirmed" && row.pickup <= day) {
+      row.status = "picked_up";
+      pickedUp++;
+    }
+  }
+  state.day = plusDays(day, 1);
+  return accepted + " accepted, " + rejected + " incompatible, " + pickedUp + " picked up.";
+}
+
+function renderBakery(state, notice = "", error = false) {
+  const day = state.day;
+  const last = lastPickup(state);
+  const loaded = state.fetchedDay === day;
+  const complete = day > last;
+  const isLectureWeek = date => date >= firstDay && date <= lastInboxDay;
+  const revenue = state.orders.filter(row => row.status !== "cancelled" && isLectureWeek(row.pickup))
+    .reduce((total, row) => total + row.quantity * products[row.product][0], 0);
+  const costs = state.helpers.filter(isLectureWeek).length * helperCost;
+  const pending = loaded ? pendingToday(state).length : 0;
+  let inbox;
+  let controls = "";
+  if (day <= lastInboxDay && !loaded) {
+    inbox = '<p class="empty">Fetch today’s messages to review new orders, changes, and cancellations.</p>';
+    controls = action("fetch", "Fetch today’s messages", {style:"primary"})
+      + '<p class="muted">Check the schedule and book any extra help before fetching.</p>';
+  } else {
+    inbox = loaded ? inboxRows(state, state.requests.filter(row => row.received === day))
+      : '<p class="empty">' + (complete ? "All lecture messages and scheduled pickups have been processed."
+        : "All seven days of messages are loaded. Close each remaining pickup day at 5 PM.") + "</p>";
+    if (!complete) {
+      const label = pending ? "Accept all and go to next day" : "Close day and continue";
+      const prompt = pending ? "Check today’s " + pending + " requested orders and accept those that fit, mark today’s pickups complete at 5 PM, and move to the next day?"
+        : "Mark today’s orders picked up at 5 PM and move to the next day?";
+      controls = action("advance", label, {style:"primary",prompt});
+    }
+  }
+  main.innerHTML = '<div class="intro"><div><h1>Bakery orders</h1><p>'
+    + (complete ? "Exercise complete" : dayLabel(day) + ", " + day.slice(0, 4))
+    + '</p></div><p class="prices">Cupcakes <strong>$40 / dozen</strong> · Cake <strong>$120 each</strong></p></div>'
+    + '<p class="feedback' + (error ? " error" : "") + '" role="status">' + escapeHtml(notice) + "</p>"
+    + '<section aria-label="November 23 to 29 totals" class="totals"><div class="total-date">Nov 23–29<strong>Week totals</strong></div>'
+    + "<div>Order revenue<strong>" + money(revenue) + "</strong></div><div>Helper costs<strong>" + money(costs)
+    + "</strong></div><div>Sales less helper costs<strong>" + money(revenue - costs) + "</strong></div></section>"
+    + '<div class="columns"><div class="inbox-column"><section class="card requests" aria-labelledby="inbox-title"><div class="card-heading">'
+    + '<h2 id="inbox-title">Instagram requests</h2><p class="muted">' + (loaded ? pending + " awaiting a decision" : "Lecture inbox · Nov 23–29")
+    + '</p></div>' + inbox + '<div class="controls">' + controls + '</div></section>'
+    + '<section class="card pickup-calendar" aria-labelledby="calendar-title">' + pickupCalendar(state, last) + '</section></div>'
+    + '<section class="card schedule" aria-labelledby="oven-title"><div class="card-heading"><h2 id="oven-title">Pickup schedule</h2>'
+    + '<p class="muted">5 PM pickups · 8 oven hours per day</p></div>' + scheduleRows(state, last)
+    + '<p class="footnote">One helper adds 4 hours for $100. Book at least 2 days ahead.</p></section></div>'
+    + '<details class="card"><summary>Order book</summary>' + orderBook(state) + '</details>'
+    + '<details class="card"><summary>Decision history</summary>' + history(state) + "</details>";
+}
+
+let displayedDay = "";
+function showBakery(state, notice, error) {
+  if (displayedDay !== state.day) selectedPickup = "";
+  displayedDay = state.day;
+  renderBakery(state, notice, error);
+}
+
+main.addEventListener("click", event => {
+  const calendarDay = event.target.closest("button[data-pickup]");
+  if (calendarDay) {
+    const state = readBakery();
+    if (state.day !== displayedDay) {
+      showBakery(state, "The work date changed in another tab.", true);
+      return;
+    }
+    selectedPickup = calendarDay.dataset.pickup;
+    const calendar = main.querySelector(".pickup-calendar");
+    calendar.innerHTML = pickupCalendar(state, lastPickup(state));
+    calendar.querySelector('[aria-pressed="true"]').focus({preventScroll:true});
+    return;
+  }
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  const {action: type, prompt, key} = button.dataset;
+  if (prompt && !window.confirm(prompt)) return;
+  const state = readBakery();
+  if (state.day !== displayedDay) {
+    showBakery(state, "The work date changed in another tab. Review the current day and try again.", true);
+    return;
+  }
+  try {
+    const notice = applyDailyAction(state, type, key);
+    saveBakery(state);
+    showBakery(state, notice);
+  } catch (error) {
+    showBakery(readBakery(), error.message, true);
+  }
+});
+
+showBakery(readBakery());
+
+</script>
+</body>
+</html>
